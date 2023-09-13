@@ -42,4 +42,23 @@ public class RatingRepository: IRatingRepository{
             where movie_id = @MovieId;
         """, new { MovieId = movieId, UserId = userId }, cancellationToken: cancellationToken));
     }
+
+    public async Task<bool> DeleteRatingAsync(Guid movieId, Guid userId, CancellationToken cancellationToken = default) {
+        using var connection = await _connectionFactory.CreateConnectionAsync(cancellationToken);
+        var result = await connection.ExecuteAsync(new CommandDefinition("""
+            delete from ratings where movie_id = @MovieId and user_id = @UserId;
+        """, new { MovieId = movieId, UserId = userId }, cancellationToken: cancellationToken));
+        return result > 0;
+    }
+
+    public async Task<IEnumerable<MovieRating>> GetRatingsForUserAsync(Guid userId, CancellationToken cancellationToken = default) {
+        using var connection = await _connectionFactory.CreateConnectionAsync(cancellationToken);
+        var retVal = await connection.QueryAsync<MovieRating>(new CommandDefinition("""
+            select r.rating, r.movie_id, m.slug
+            from ratings r
+            inner join movies m on m.id = r.movie_id
+            where r.user_id = @UserId;
+        """, new { UserId = userId }, cancellationToken: cancellationToken));
+        return retVal;
+    }
 }

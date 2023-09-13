@@ -21,5 +21,7 @@ public static class ApiEndpoints {
         public const string DeleteAll = $"{Base}/all";
         
         public const string Rate = $"{Base}/{{id:guid}}/rating";
+        public const string DeleteRating = $"{Base}/{{id:guid}}/rating";
+        public const string GetUserRatings = $"{Base}/ratings";
     }
 }

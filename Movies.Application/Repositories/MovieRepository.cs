@@ -77,7 +77,7 @@ public class MovieRepository : IMovieRepository{
             select m.*, round(avg(r.rating), 1) as rating, myr.rating as userrating
             from movies m
             left join ratings r on m.id = r.movie_id
-            left join rating myr on m.id = myr.movie_id and myr.user_id = @userId
+            left join ratings myr on m.id = myr.movie_id and myr.user_id = @userId
             where id = @id
             group by id, userrating
         """, new { id, userId }, cancellationToken: cancellationToken));
@@ -103,8 +103,8 @@ public class MovieRepository : IMovieRepository{
             select m.*, round(avg(r.rating), 1) as rating, myr.rating as userrating
             from movies m
             left join ratings r on m.id = r.movie_id
-            left join rating myr on m.id = myr.movie_id and myr.user_id = @userId
-            where id = @id
+            left join ratings myr on m.id = myr.movie_id and myr.user_id = @userId
+            where slug = @slug
             group by id, userrating
         """, new { slug, userId }, cancellationToken: cancellationToken));
         
@@ -122,10 +122,15 @@ public class MovieRepository : IMovieRepository{
 
         return movie;
     }
-    
-    public async Task<IEnumerable<Movie>> GetAllAsync(Guid? userId = default, CancellationToken cancellationToken = default) {
+    public async Task<IEnumerable<Movie>> GetAllAsync(GetAllMoviesOptions options, CancellationToken cancellationToken = default) {
         using var connection = await _connectionFactory.CreateConnectionAsync(cancellationToken);
-        var result = await connection.QueryAsync(new CommandDefinition("""
+        
+        var orderClause = string.Empty;
+        if (options.SortField != null) {
+            orderClause = $"order by {options.SortField} {(options.SortOrder == SortOrder.Descending ? "desc" : "asc")}";
+        }
+        
+        var result = await connection.QueryAsync(new CommandDefinition($"""
             select m.*, 
                    string_agg(distinct g.name, ',') as genres,
                    round(avg(r.rating), 1) as rating,
@@ -134,14 +139,25 @@ public class MovieRepository : IMovieRepository{
                 left join genres g on m.id = g.movie_id
                 left join ratings r on m.id = r.movie_id
                 left join ratings myr on m.id = myr.movie_id and myr.user_id = @userId
-            group by id, userrating
-        """, new { userId } , cancellationToken: cancellationToken));
+            where (@title is null or m.title like ('%' || @title || '%'))
+              and (@yearOfRelease is null or m.yearofrelease = @yearOfRelease)
+            group by id, userrating {orderClause}
+            limit @pageSize 
+            offset @offset;
+        """, new {
+            userId = options.UserId, 
+            yearOfRelease = options.Year,
+            title = options.Title,
+            pageSize = options.PageSize,
+            offset = (options.Page - 1) * options.PageSize
+        } , cancellationToken: cancellationToken));
 
         return result.Select(x => new Movie {
             Id = x.id,
             Title = x.title,
             YearOfRelease = x.yearofrelease,
             UserRating = (int?)x.userrating,
+            Rating = (float?)x.rating,
             Genres = Enumerable.ToList(x.genres.Split(','))
         });
     }
@@ -190,5 +206,13 @@ public class MovieRepository : IMovieRepository{
         return await connection.ExecuteScalarAsync<bool>(new CommandDefinition("""
             select exists(select 1 from movies where id = @id);
         """, new { id }, cancellationToken: cancellationToken));
+    }
+
+    public async Task<int> GetCountAsync(string? title, int? yearOfRelease, CancellationToken cancellationToken = default) {
+        using var connection = await _connectionFactory.CreateConnectionAsync(cancellationToken);
+        return await connection.ExecuteScalarAsync<int>(new CommandDefinition("""
+            select count(*) from movies where (@title is null or title like ('%' || @title || '%')) and (@yearOfRelease is null or yearofrelease = @yearOfRelease);
+        """, new { title, yearOfRelease }, cancellationToken: cancellationToken));
+        
     }
 }
