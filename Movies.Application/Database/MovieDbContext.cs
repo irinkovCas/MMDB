@@ -8,12 +8,13 @@ namespace Movies.Application.database {
         public MovieDbContext(DbContextOptions<MovieDbContext> options) : base(options) {
         }
 
-        public DbSet<Movie> Movies { get; set; }
+        public DbSet<Movie> Movies { get; init; }
         public DbSet<Genre> Genres { get; set; }
-        public DbSet<Rating> Ratings { get; set; }
+        public DbSet<Rating> Ratings { get; init; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             modelBuilder.Entity<Movie>()
+                .Ignore(m => m.Rating)
                 .HasMany(m => m.Ratings)
                 // .WithOne(r => r.Movie) // If the movie has a navigation property to the rating
                 .WithOne(rating => rating.Movie) // If the movie doesn't has a navigation property to the rating
