@@ -9,6 +9,7 @@ namespace Movies.Application.database {
         }
 
         public DbSet<Movie> Movies { get; set; }
+        public DbSet<Genre> Genres { get; set; }
         public DbSet<Rating> Ratings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
@@ -19,6 +20,10 @@ namespace Movies.Application.database {
                 .HasForeignKey(r => r.MovieId) // Assuming Rating has a foreign key property named MovieId
                 // .HasForeignKey("MovieId") // Shadow property
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Genre>()
+                .HasIndex(g => g.Name)
+                .IsUnique();
 
             // modelBuilder.Entity<Movie>()
             //     .HasMany(m => m.MovieRatings)

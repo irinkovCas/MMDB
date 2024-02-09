@@ -13,28 +13,34 @@ namespace Movies.Application.Repositorires {
         }
 
         public async Task<IEnumerable<Movie>> GetAllAsync(CancellationToken token = default) {
-            var movies = await movieDbContext.Movies
+            var moviesWithRatings = await movieDbContext.Movies
                 .Include(m => m.Genres)
-                .Include(m => m.Ratings)
+                .Select(m => new {
+                    Movie = m,
+                    AverageRating = m.Ratings.Any() ? m.Ratings.Average(r => r.Score) : (float?)null
+                })
                 .ToListAsync(token);
+
+            var movies = moviesWithRatings.Select(mr => {
+                var movie = mr.Movie;
+                movie.Rating = mr.AverageRating;
+                return movie;
+            });
 
             return movies;
         }
 
+
         public async Task<float?> GetAverageRatingAsync(Guid movieId, CancellationToken token = default) {
-            // Check if the movie exists asynchronously
-            bool movieExists = await movieDbContext.Movies
-                .AnyAsync(m => m.Id == movieId, token);
+            float? averageRating = null;
 
-            if (!movieExists) {
-                return null;
-            }
-
-            // Directly calculate the average rating from the database
-            float? averageRating = await movieDbContext.Ratings
+            try {
+                averageRating = await movieDbContext.Ratings
                 .Where(r => r.MovieId == movieId)
-                .Select(r => (float?)r.Score)
+                .Select(r => r.Score)
                 .AverageAsync(token);
+
+            } catch (InvalidOperationException) { }
 
             return averageRating;
         }
@@ -80,13 +86,30 @@ namespace Movies.Application.Repositorires {
         //
         //     return averageRating;
         // }
+        public async Task<bool> CreateMovieAsync(Movie movie, CancellationToken cancellationToken) {
+            movie.Slug = movie.GenerateSlug();
 
-        public Task<bool> CreateMovieAsync(Movie movie, CancellationToken cancellationToken) {
+            var genreNames = movie.Genres.Select(g => g.Name).ToList();
+
+            var existingGenres = await movieDbContext.Genres
+                .Where(g => genreNames.Contains(g.Name))
+                .ToListAsync(cancellationToken);
+
+            movie.Genres.Clear();
+
+            foreach (var genreName in genreNames) {
+                var genre = existingGenres.FirstOrDefault(g => g.Name == genreName) ??
+                    movieDbContext.Genres.Local.FirstOrDefault(g => g.Name == genreName) ??
+                    new Genre { Name = genreName };
+
+                movie.Genres.Add(genre);
+            }
+
             movieDbContext.Movies.Add(movie);
 
-            return movieDbContext
-                .SaveChangesAsync(cancellationToken)
-                .ContinueWith(t => t.Result > 0, cancellationToken);
+            var saveResult = await movieDbContext.SaveChangesAsync(cancellationToken);
+
+            return saveResult > 0;
         }
 
         public Task<bool> RateMovieAsync(Guid id, int requestRating, CancellationToken cancellationToken) {
@@ -100,27 +123,63 @@ namespace Movies.Application.Repositorires {
                 .ContinueWith(t => t.Result > 0, cancellationToken);
         }
 
-        public Task<bool> DeleteMovieAsync(Guid idOrSlug, CancellationToken cancellationToken) {
-            movieDbContext.Movies.Remove(new Movie() {
-                Id = idOrSlug
-            });
+        public Task<bool> DeleteMovieAsync(Guid id, CancellationToken cancellationToken) {
+            // System.InvalidOperationException: The instance of entity type 'Movie' cannot be tracked because another instance
+            // with the same key value for {'Id'} is already being tracked. When attaching existing entities,
+            // ensure that only one entity instance with a given key value is attached.
+            // Consider using 'DbContextOptionsBuilder.EnableSensitiveDataLogging' to see the conflicting key values.
+            //
+            // movieDbContext.Movies.Remove(new Movie() {
+            //     Id = idOrSlug
+            // });
+
+            Movie? movie = movieDbContext.Movies.Find(id);
+
+            if (movie == null) {
+                return Task.FromResult(false);
+            }
+
+            movieDbContext.Movies.Remove(movie);
 
             return movieDbContext
                 .SaveChangesAsync(cancellationToken)
                 .ContinueWith(t => t.Result > 0, cancellationToken);
         }
 
-        public async Task<Movie?> UpdateMovieAsync(Movie movie, CancellationToken cancellationToken) {
-            movieDbContext.Movies.Update(movie);
+        public async Task<Movie?> UpdateMovieAsync(Movie updatedMovie, CancellationToken cancellationToken) {
+            var existingMovie = await movieDbContext.Movies
+                .Include(m => m.Genres)
+                .FirstOrDefaultAsync(m => m.Id == updatedMovie.Id, cancellationToken);
 
-            int result = await movieDbContext.SaveChangesAsync(cancellationToken);
-
-            if (result == 0) {
+            if (existingMovie == null) {
                 return null;
             }
 
-            return await movieDbContext.Movies.FindAsync(movie.Id);
+            if (existingMovie.Genres != null)
+                existingMovie.Genres.Clear();
+
+            var genreNames = updatedMovie.Genres.Select(g => g.Name).ToList();
+            var newGenres = await movieDbContext.Genres
+                .Where(g => genreNames.Contains(g.Name))
+                .ToListAsync(cancellationToken);
+
+            foreach (var genre in newGenres) {
+                existingMovie.Genres.Add(genre);
+            }
+
+            var newGenreNames = newGenres.Select(g => g.Name);
+            var missingGenres = updatedMovie.Genres.Where(g => !newGenreNames.Contains(g.Name)).ToList();
+            foreach (var missingGenre in missingGenres) {
+                existingMovie.Genres.Add(missingGenre);
+            }
+
+            existingMovie.Title = updatedMovie.Title;
+            existingMovie.YearOfRelease = updatedMovie.YearOfRelease;
+
+            var result = await movieDbContext.SaveChangesAsync(cancellationToken);
+            return result > 0 ? existingMovie : null;
         }
+
 
         public Task<Movie?> GetBySlugAsync(string slug, Guid? userId, CancellationToken token) {
             return movieDbContext.Movies

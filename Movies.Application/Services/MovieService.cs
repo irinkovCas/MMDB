@@ -43,11 +43,11 @@ public class MovieService : IMovieService {
         return movieRepository.UpdateMovieAsync(movie, cancellationToken);
     }
 
-    public Task<Movie> GetByIdAsync(Guid movieId, Guid? userId, CancellationToken token) {
+    public Task<Movie?> GetByIdAsync(Guid movieId, Guid? userId, CancellationToken token) {
         return movieRepository.GetByIdAsync(movieId, userId, token);
     }
 
-    public Task<Movie> GetBySlugAsync(string slug, Guid? userId, CancellationToken token) {
+    public Task<Movie?> GetBySlugAsync(string slug, Guid? userId, CancellationToken token) {
         return movieRepository.GetBySlugAsync(slug, userId, token);
     }
 

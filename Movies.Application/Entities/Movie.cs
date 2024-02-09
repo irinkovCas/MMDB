@@ -7,17 +7,18 @@ public partial class Movie {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public int YearOfRelease { get; set; }
+    public string Slug { get; set; }
 
-    public string Slug => GenerateSlug();
+    public float? Rating { get; set; }
 
     #region Navigation Properties
 
-    public ICollection<Genre>? Genres { get; init; }
+    public ICollection<Genre>? Genres { get; set; }
     public ICollection<Rating>? Ratings { get; init; }
 
     #endregion
 
-    private string GenerateSlug() {
+    public string GenerateSlug() {
         var sluggedTitle = SlugRegex().Replace(Title, string.Empty)
             .ToLower().Replace(" ", "-");
         return $"{sluggedTitle}-{YearOfRelease}";
