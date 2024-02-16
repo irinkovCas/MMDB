@@ -106,4 +106,13 @@ public class MoviesController : ControllerBase {
         return Ok();
     }
 
+    [Authorize]
+    [HttpGet(ApiEndpoints.Movies.GetUserRatings)]
+    [ProducesResponseType(typeof(IEnumerable<MovieRatingResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserRatings(CancellationToken token = default) {
+        var userId = HttpContext.GetUserId();
+        var ratings = await movieService.GetRatingsForUserAsync(userId!.Value, token);
+        var ratingsResponse = ratings.Select(r => r.MapToDto());
+        return Ok(ratingsResponse);
+    }
 }

@@ -13,4 +13,6 @@ public interface IMovieService {
     Task<Movie?> GetByIdAsync(Guid result, Guid? userId, CancellationToken token);
     Task<Movie?> GetBySlugAsync(string idOrSlug, Guid? userId, CancellationToken token);
 
+    Task<ICollection<Rating>> GetRatingsForUserAsync(Guid userId, CancellationToken token);
+
 }

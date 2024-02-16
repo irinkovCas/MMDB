@@ -6,6 +6,8 @@ public class Rating {
     public Guid Id { get; set; }
     public float Score { get; set; }
 
+    public Guid UserId { get; set; }
+
     #region Navigation Properties
 
     public Movie Movie { get; set; }

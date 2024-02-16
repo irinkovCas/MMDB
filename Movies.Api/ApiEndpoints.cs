@@ -19,6 +19,7 @@ public class ApiEndpoints {
         public const string Rate = Base + "/rate/{idOrSlug}";
         public const string Delete = Base + "/{id}";
         public const string Update = Base + "/{id}";
+        public const string GetUserRatings = Base + "/ratings";
 
     }
 

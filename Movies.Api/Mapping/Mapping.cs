@@ -28,4 +28,10 @@ public static class Mapping {
         Genres = movie.Genres.Select(x => new Genre { Name = x }).ToList()
     };
 
+    public static RatingDto MapToDto(this Rating rating) => new() {
+        MovieId = rating.MovieId,
+        Rating = rating.Score,
+        UserId = rating.UserId
+    };
+
 }

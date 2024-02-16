@@ -51,4 +51,8 @@ public class MovieService : IMovieService {
         return movieRepository.GetBySlugAsync(slug, userId, token);
     }
 
+    public Task<ICollection<Rating>> GetRatingsForUserAsync(Guid userId, CancellationToken token) {
+        return movieRepository.GetRatingsForUserAsync(userId, token);
+    }
+
 }

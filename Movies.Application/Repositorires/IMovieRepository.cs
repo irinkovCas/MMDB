@@ -4,7 +4,7 @@ namespace Movies.Application.Repositorires {
 
     public interface IMovieRepository {
 
-        Task<IEnumerable<Movie>> GetAllAsync(CancellationToken token = default);
+        Task<ICollection<Movie>> GetAllAsync(CancellationToken token = default);
         Task<float?> GetAverageRatingAsync(Guid movieId, CancellationToken token = default);
 
         Task<bool> CreateMovieAsync(Movie movie, CancellationToken cancellationToken);
@@ -18,6 +18,8 @@ namespace Movies.Application.Repositorires {
         Task<Movie?> GetBySlugAsync(string slug, Guid? userId, CancellationToken token);
 
         Task<Movie?> GetByIdAsync(Guid id, Guid? userId, CancellationToken token);
+
+        Task<ICollection<Rating>> GetRatingsForUserAsync(Guid userId, CancellationToken token);
 
     }
 

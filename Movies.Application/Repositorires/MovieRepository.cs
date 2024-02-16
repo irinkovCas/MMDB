@@ -12,7 +12,7 @@ namespace Movies.Application.Repositorires {
             this.movieDbContext = movieDbContext;
         }
 
-        public async Task<IEnumerable<Movie>> GetAllAsync(CancellationToken token = default) {
+        public async Task<ICollection<Movie>> GetAllAsync(CancellationToken token = default) {
             var moviesWithRatings = await movieDbContext.Movies
                 .Include(m => m.Genres)
                 .Select(m => new {
@@ -22,25 +22,26 @@ namespace Movies.Application.Repositorires {
                 .ToListAsync(token);
 
             var movies = moviesWithRatings.Select(mr => {
-                var movie = mr.Movie;
-                movie.Rating = mr.AverageRating;
-                return movie;
-            });
+                    var movie = mr.Movie;
+                    movie.Rating = mr.AverageRating;
+
+                    return movie;
+                })
+                .ToList();
 
             return movies;
         }
-
 
         public async Task<float?> GetAverageRatingAsync(Guid movieId, CancellationToken token = default) {
             float? averageRating = null;
 
             try {
                 averageRating = await movieDbContext.Ratings
-                .Where(r => r.MovieId == movieId)
-                .Select(r => r.Score)
-                .AverageAsync(token);
-
-            } catch (InvalidOperationException) { }
+                    .Where(r => r.MovieId == movieId)
+                    .Select(r => r.Score)
+                    .AverageAsync(token);
+            } catch (InvalidOperationException) {
+            }
 
             return averageRating;
         }
@@ -155,10 +156,10 @@ namespace Movies.Application.Repositorires {
                 return null;
             }
 
-            if (existingMovie.Genres != null)
-                existingMovie.Genres.Clear();
+            if (existingMovie.Genres != null) existingMovie.Genres.Clear();
 
             var genreNames = updatedMovie.Genres.Select(g => g.Name).ToList();
+
             var newGenres = await movieDbContext.Genres
                 .Where(g => genreNames.Contains(g.Name))
                 .ToListAsync(cancellationToken);
@@ -169,6 +170,7 @@ namespace Movies.Application.Repositorires {
 
             var newGenreNames = newGenres.Select(g => g.Name);
             var missingGenres = updatedMovie.Genres.Where(g => !newGenreNames.Contains(g.Name)).ToList();
+
             foreach (var missingGenre in missingGenres) {
                 existingMovie.Genres.Add(missingGenre);
             }
@@ -177,9 +179,9 @@ namespace Movies.Application.Repositorires {
             existingMovie.YearOfRelease = updatedMovie.YearOfRelease;
 
             var result = await movieDbContext.SaveChangesAsync(cancellationToken);
+
             return result > 0 ? existingMovie : null;
         }
-
 
         public Task<Movie?> GetBySlugAsync(string slug, Guid? userId, CancellationToken token) {
             return movieDbContext.Movies
@@ -191,6 +193,14 @@ namespace Movies.Application.Repositorires {
             return movieDbContext.Movies
                 .Where(m => m.Id == id)
                 .FirstOrDefaultAsync(token);
+        }
+
+        public async Task<ICollection<Rating>> GetRatingsForUserAsync(Guid userId, CancellationToken token) {
+            List<Rating> ratings = await movieDbContext.Ratings
+                .Where(r => r.UserId == userId)
+                .ToListAsync(token);
+
+            return ratings;
         }
 
     }
