@@ -25,11 +25,11 @@ builder.Services.AddAuthentication(options => {
         };
     });
 
-builder.Services.AddAuthorization(options => {
-    options.AddPolicy(
-        AuthConstants.AdminUserPolicyName,
-        policy => policy.RequireClaim(AuthConstants.AdminUserClaimName, "true")
-    );
+    builder.Services.AddAuthorization(options => {
+        options.AddPolicy(
+            AuthConstants.AdminUserPolicyName,
+            p => p.AddRequirements(new AdminAuthRequirement(config["ApiKey"]!))
+        );
 
     options.AddPolicy(
         AuthConstants.TrustedMemberPolicyName,
