@@ -3,25 +3,30 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Movies.Api.Auth;
 
-public class ApiKeyAuthFilter : IAuthorizationFilter {
+public class ApiKeyAuthFilter : IAuthorizationFilter
+{
 
-    private readonly IConfiguration _configuration;
+    private readonly IConfiguration configuration;
 
-    public ApiKeyAuthFilter(IConfiguration configuration) {
-        _configuration = configuration;
+    public ApiKeyAuthFilter(IConfiguration configuration)
+    {
+        this.configuration = configuration;
     }
 
-    public void OnAuthorization(AuthorizationFilterContext context) {
+    public void OnAuthorization(AuthorizationFilterContext context)
+    {
         if (!context.HttpContext.Request.Headers.TryGetValue(AuthConstants.ApiKeyHeaderName,
-            out var extractedApiKey)) {
+            out var extractedApiKey))
+        {
             context.Result = new UnauthorizedObjectResult("API Key missing");
 
             return;
         }
 
-        var apiKey = _configuration["ApiKey"]!;
+        var apiKey = this.configuration["ApiKey"]!;
 
-        if (apiKey != extractedApiKey) {
+        if (apiKey != extractedApiKey)
+        {
             context.Result = new UnauthorizedObjectResult("Invalid API Key");
         }
     }

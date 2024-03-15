@@ -1,19 +1,28 @@
 ﻿using Movies.Application.Models;
-using Movies.Contracts.Entities;
 using Movies.Contracts.Requests;
 
 namespace Movies.Api.Mapping;
 
-public static class Mapping {
+using Application.Entities;
+using Contracts.DTOs;
 
-    public static Movie MapToMovie(this CreateMovieRequest request) => new() {
+public static class Mapping
+{
+
+    public static Movie MapToMovie(this CreateMovieRequest request) => new()
+    {
         Id = Guid.NewGuid(),
         Title = request.Title,
         YearOfRelease = request.YearOfRelease,
-        Genres = request.Genres.Select(x => new Genre { Name = x }).ToList(),
+        Genres = request.Genres.Select(x => new Genre
+            {
+                Name = x
+            })
+            .ToList(),
     };
 
-    public static MovieDto MapToDto(this Movie movie) => new() {
+    public static MovieDto MapToDto(this Movie movie) => new()
+    {
         Id = movie.Id,
         Title = movie.Title,
         YearOfRelease = movie.YearOfRelease,
@@ -21,17 +30,21 @@ public static class Mapping {
         Rating = movie.Rating
     };
 
-    public static Movie MapToMovie(this UpdateMovieRequest movie, Guid id) => new() {
+    public static Movie MapToMovie(this UpdateMovieRequest movie, Guid id) => new()
+    {
         Id = id,
         Title = movie.Title,
         YearOfRelease = movie.YearOfRelease,
-        Genres = movie.Genres.Select(x => new Genre { Name = x }).ToList()
+        Genres = movie.Genres.Select(x => new Genre
+            {
+                Name = x
+            })
+            .ToList()
     };
 
-    public static RatingDto MapToDto(this Rating rating) => new() {
-        MovieId = rating.MovieId,
-        Rating = rating.Score,
-        UserId = rating.UserId
+    public static RatingDto MapToDto(this Rating rating) => new()
+    {
+        MovieId = rating.MovieId, Rating = rating.Score, UserId = rating.UserId
     };
 
 }

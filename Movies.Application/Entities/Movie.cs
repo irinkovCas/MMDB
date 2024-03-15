@@ -2,7 +2,10 @@
 
 namespace Movies.Application.Models;
 
-public partial class Movie {
+using Entities;
+
+public partial class Movie
+{
 
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -18,9 +21,13 @@ public partial class Movie {
 
     #endregion
 
-    public string GenerateSlug() {
-        var sluggedTitle = SlugRegex().Replace(Title, string.Empty)
-            .ToLower().Replace(" ", "-");
+    public string GenerateSlug()
+    {
+        var sluggedTitle = SlugRegex()
+            .Replace(Title, string.Empty)
+            .ToLower()
+            .Replace(" ", "-");
+
         return $"{sluggedTitle}-{YearOfRelease}";
     }
 

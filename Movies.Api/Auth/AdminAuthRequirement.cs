@@ -3,16 +3,20 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Movies.Api.Auth;
 
-public class AdminAuthRequirement : IAuthorizationHandler, IAuthorizationRequirement {
+public class AdminAuthRequirement : IAuthorizationHandler, IAuthorizationRequirement
+{
 
-    private readonly string _apiKey;
+    private readonly string apiKey;
 
-    public AdminAuthRequirement(string apiKey) {
-        _apiKey = apiKey;
+    public AdminAuthRequirement(string apiKey)
+    {
+        apiKey = apiKey;
     }
 
-    public Task HandleAsync(AuthorizationHandlerContext context) {
-        if (context.User.HasClaim(AuthConstants.AdminUserClaimName, "true")) {
+    public Task HandleAsync(AuthorizationHandlerContext context)
+    {
+        if (context.User.HasClaim(AuthConstants.AdminUserClaimName, "true"))
+        {
             context.Succeed(this);
 
             return Task.CompletedTask;
@@ -20,19 +24,22 @@ public class AdminAuthRequirement : IAuthorizationHandler, IAuthorizationRequire
 
         var httpContext = context.Resource as HttpContext;
 
-        if (httpContext is null) {
+        if (httpContext is null)
+        {
             return Task.CompletedTask;
         }
 
         if (!httpContext.Request.Headers.TryGetValue(AuthConstants.ApiKeyHeaderName,
             out
-            var extractedApiKey)) {
+            var extractedApiKey))
+        {
             context.Fail();
 
             return Task.CompletedTask;
         }
 
-        if (_apiKey != extractedApiKey) {
+        if (this.apiKey != extractedApiKey)
+        {
             context.Fail();
 
             return Task.CompletedTask;

@@ -1,18 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Movies.Application.Models;
 
-namespace Movies.Application.database {
+namespace Movies.Application.database
+{
 
-    public class MovieDbContext : DbContext {
+    using Entities;
 
-        public MovieDbContext(DbContextOptions<MovieDbContext> options) : base(options) {
+    public class MovieDbContext : DbContext
+    {
+
+        public MovieDbContext(DbContextOptions<MovieDbContext> options) : base(options)
+        {
         }
 
         public DbSet<Movie> Movies { get; init; }
         public DbSet<Genre> Genres { get; set; }
         public DbSet<Rating> Ratings { get; init; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<Movie>()
                 .Ignore(m => m.Rating)
                 .HasMany(m => m.Ratings)

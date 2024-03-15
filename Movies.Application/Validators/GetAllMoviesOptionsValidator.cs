@@ -3,13 +3,16 @@ using Movies.Contracts.Requests;
 
 namespace Movies.Application.Validators;
 
-public class GetAllMoviesOptionsValidator : AbstractValidator<GetAllMoviesRequest> {
+public class GetAllMoviesOptionsValidator : AbstractValidator<GetAllMoviesRequest>
+{
 
-    private static readonly string[] AcceptableSortFields = {
+    private static readonly string[] AcceptableSortFields =
+    {
         "title", "yearofrelease"
     };
 
-    public GetAllMoviesOptionsValidator() {
+    public GetAllMoviesOptionsValidator()
+    {
         RuleFor(x => x.Year)
             .LessThanOrEqualTo(DateTime.UtcNow.Year);
 

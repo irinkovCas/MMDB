@@ -9,27 +9,32 @@ using Movies.Contracts.Requests;
 namespace Movies.Api.Controllers;
 
 [ApiController]
-public class AuthenticationController : ControllerBase {
+public class AuthenticationController : ControllerBase
+{
 
     private const string TokenSecret = "ForTheLoveOfGodStoreAndLoadThisSecurely";
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromHours(8);
 
     [HttpPost(ApiEndpoints.Authentication.Token)]
-    public async Task<IActionResult> Token([FromBody] TokenRequest request) {
+    public async Task<IActionResult> Token([FromBody] TokenRequest request)
+    {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(TokenSecret);
 
-        var claims = new List<Claim> {
+        var claims = new List<Claim>
+        {
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Sub, request.Email),
             new(JwtRegisteredClaimNames.Email, request.Email),
             new("userid", request.UserId.ToString())
         };
 
-        foreach (var claimPair in request.CustomClaims) {
+        foreach (var claimPair in request.CustomClaims)
+        {
             var jsonElement = (JsonElement)claimPair.Value;
 
-            var valueType = jsonElement.ValueKind switch {
+            var valueType = jsonElement.ValueKind switch
+            {
                 JsonValueKind.True => ClaimValueTypes.Boolean,
                 JsonValueKind.False => ClaimValueTypes.Boolean,
                 JsonValueKind.Number => ClaimValueTypes.Double,
@@ -40,7 +45,8 @@ public class AuthenticationController : ControllerBase {
             claims.Add(claim);
         }
 
-        var tokenDescriptor = new SecurityTokenDescriptor {
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.Add(TokenLifetime),
             Issuer = "https://id.mm.com",

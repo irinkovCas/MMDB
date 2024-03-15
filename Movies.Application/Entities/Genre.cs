@@ -1,16 +1,17 @@
-﻿namespace Movies.Application.Models {
+﻿namespace Movies.Application.Entities;
 
-    public class Genre {
+using Models;
 
-        public Guid Id { get; set; }
-        public string Name { get; set; }
+public class Genre
+{
 
-        #region Navigation
+    public Guid Id { get; set; }
+    public string Name { get; set; }
 
-        public ICollection<Movie> Movie { get; set; }
+    #region Navigation
 
-        #endregion
+    public ICollection<Movie> Movie { get; set; }
 
-    }
+    #endregion
 
 }
